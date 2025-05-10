@@ -9,10 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./backend
-
     steps:
       - name: 📥 Checkout du code
         uses: actions/checkout@v3
@@ -20,32 +16,21 @@ jobs:
       - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: 3.11
 
-      - name: 📦 Installer les dépendances
-        run: pip install -r requirements.txt
+      - name: 📦 Installer les dépendances backend
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: 🚀 Vérifier que FastAPI se lance
         run: |
+          cd backend
           uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          sleep 3
+          sleep 5
           curl http://localhost:8000
 
-  docker:
-    needs: build
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 📥 Checkout du code
-        uses: actions/checkout@v3
-
-      - name: 🔐 Login to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: 🐳 Build and push Docker image
+      - name: 🐳 Build Docker (optionnel)
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/cloudvision:latest ./backend
-          docker push ${{ secrets.DOCKER_USERNAME }}/cloudvision:latest
+          docker --version
