@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import router
-from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
 
 # ✅ Autoriser les requêtes depuis le front sur le port 8888
