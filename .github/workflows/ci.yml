@@ -1,28 +1,35 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout du code
         uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Installer les dépendances backend
         run: |
-          pip install -r backend/requirements.txt
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
-      - name: Run tests
+      - name: Vérifier que FastAPI se lance
         run: |
-          python -m unittest discover tests
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+          curl --fail http://localhost:8000/
+
+      - name: Build Docker
+        run: |
+          docker-compose -f infrastructure/docker-compose.yml build

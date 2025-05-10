@@ -28,6 +28,12 @@ services:
   redis:
     image: redis:alpine
     container_name: infrastructure-redis
+  frontend:
+    image: nginx:alpine
+    ports:
+      - "8888:80"
+    volumes:
+      - ../frontend/public:/usr/share/nginx/html:ro
 
 volumes:
   minio_data:

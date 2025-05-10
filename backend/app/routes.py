@@ -1,5 +1,5 @@
 history = []  # pour l'instant, stocké en RAM
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, HTTPException
 from PIL import Image
 import io
 from .ai_services import analyze_image
@@ -23,22 +23,24 @@ s3 = boto3.client(
 BUCKET = "images"
 s3.create_bucket(Bucket=BUCKET)  # safe to call again, idempotent
 
+
 @router.post("/analyze")
 async def analyze(file: UploadFile = File(...)):
     contents = await file.read()
-    
-    # Enregistrement dans S3 (MinIO)
-    filename = f"{uuid.uuid4()}.jpg"
-    s3.put_object(Bucket=BUCKET, Key=filename, Body=contents)
 
-    # Traitement
-    image = Image.open(io.BytesIO(contents))
-    result = analyze_image(image)
+    try:
+        filename = f"{uuid.uuid4()}.jpg"
+        s3.put_object(Bucket=BUCKET, Key=filename, Body=contents)
 
-    # Enregistrement historique (exemple simple en mémoire)
-    history.append({"filename": filename, "result": result})
+        image = Image.open(io.BytesIO(contents)).convert("RGB")
+        result = analyze_image(image)
 
-    return {"filename": filename, "result": result}
+        history.append({"filename": filename, "result": result})
+        return {"filename": filename, "result": result}
+
+    except Exception as e:
+        print("[❌ ERREUR analyse]", str(e))  # 💥 important pour voir ce qui plante
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/history")
 def get_history():
