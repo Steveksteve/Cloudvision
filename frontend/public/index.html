@@ -1,37 +1,120 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>CloudVision</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-  <h1>Analyser une image</h1>
-  <form id="uploadForm" enctype="multipart/form-data">
-    <input type="file" name="file" />
-    <button type="submit">Envoyer</button>
-  </form>
+<body class="bg-gradient-to-br from-sky-50 to-blue-100 min-h-screen flex items-center justify-center p-4 font-sans">
 
-  <h3>Résultat :</h3>
-  <pre id="result"></pre>
+  <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-xl relative border border-blue-200">
+    <h1 class="text-3xl font-extrabold text-center text-blue-800 mb-2 animate-pulse">CloudVision</h1>
+    <p class="text-center text-slate-600 mb-6">Analysez vos images</p>
+
+    <form id="uploadForm" class="space-y-4" enctype="multipart/form-data">
+      <label class="block">
+        <span class="text-slate-700 font-medium"> Choisissez une image :</span>
+        <input
+          type="file"
+          name="file"
+          accept="image/*"
+          required
+          class="mt-2 block w-full text-sm text-slate-600
+                 file:mr-4 file:py-2 file:px-4
+                 file:rounded-full file:border-0
+                 file:text-sm file:font-semibold
+                 file:bg-blue-600 file:text-white
+                 hover:file:bg-blue-700 transition"
+        />
+      </label>
+
+      <div id="preview-container" class="hidden mt-4">
+        <p class="text-slate-500 text-sm mb-1"> Aperçu :</p>
+        <img id="preview" class="rounded-xl border shadow-md max-h-48 mx-auto" />
+      </div>
+
+      <button
+        type="submit"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-xl transition shadow-md"
+      >
+        Lancer l’analyse
+      </button>
+    </form>
+
+    <div id="loading" class="mt-6 text-center text-blue-600 font-medium hidden animate-pulse">⏳ Analyse en cours...</div>
+
+    <div id="result-container" class="mt-8 hidden">
+      <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg shadow">
+        <div class="flex items-center space-x-3">
+          <span class="text-blue-600 text-xl"></span>
+          <h3 class="text-blue-800 font-bold text-lg">Résultat de l’analyse</h3>
+        </div>
+        <p id="result" class="mt-2 text-slate-700 text-sm whitespace-pre-wrap"></p>
+      </div>
+    </div>
+
+    <div class="mt-6 text-center">
+      <a href="http://localhost:8000/history" target="_blank" class="text-blue-600 hover:underline text-sm">
+         Voir l’historique des analyses
+      </a>
+    </div>
+  </div>
 
   <script>
-    document.getElementById('uploadForm').onsubmit = async (e) => {
+    const form = document.getElementById('uploadForm');
+    const result = document.getElementById('result');
+    const resultContainer = document.getElementById('result-container');
+    const loading = document.getElementById('loading');
+    const preview = document.getElementById('preview');
+    const previewContainer = document.getElementById('preview-container');
+
+    // preview logic
+    form.file.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        preview.src = reader.result;
+        previewContainer.classList.remove("hidden");
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // upload + analyze
+    form.onsubmit = async (e) => {
       e.preventDefault();
       const formData = new FormData(e.target);
+
+      resultContainer.classList.add('hidden');
+      loading.classList.remove('hidden');
+      result.textContent = "";
 
       try {
         const res = await fetch('http://localhost:8000/analyze', {
           method: 'POST',
           body: formData
         });
-
         const data = await res.json();
-        document.getElementById('result').textContent = JSON.stringify(data, null, 2);
-      } catch (error) {
-        document.getElementById('result').textContent = "Erreur lors de l’analyse.";
-        console.error(error);
+        loading.classList.add('hidden');
+        resultContainer.classList.remove('hidden');
+        // Si result est un objet complexe (comme { label: "cat", score: 0.92 }), on affiche proprement :
+if (typeof data.result === 'object') {
+  result.innerHTML = Object.entries(data.result)
+    .map(([key, val]) => `<div><strong>${key}:</strong> ${val}</div>`)
+    .join('');
+} else {
+  result.textContent = data.result;
+}
+
+      } catch (err) {
+        loading.classList.add('hidden');
+        resultContainer.classList.remove('hidden');
+        result.textContent = " Erreur lors de l’analyse.";
+        console.error(err);
       }
     };
   </script>
+
 </body>
 </html>
