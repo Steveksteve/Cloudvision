@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   backend:
     build: ../backend
@@ -9,8 +11,8 @@ services:
     depends_on:
       - minio
     environment:
-      - AWS_ACCESS_KEY_ID=admin
-      - AWS_SECRET_ACCESS_KEY=password
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
 
   minio:
     image: minio/minio
@@ -21,13 +23,14 @@ services:
     volumes:
       - minio_data:/data
     environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: password
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     command: server /data --console-address ":9001"
 
   redis:
     image: redis:alpine
     container_name: infrastructure-redis
+
   frontend:
     image: nginx:alpine
     ports:
