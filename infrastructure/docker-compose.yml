@@ -10,9 +10,8 @@ services:
       - ../backend:/app
     depends_on:
       - minio
-    environment:
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    env_file:
+      - .env
 
   minio:
     image: minio/minio
@@ -22,10 +21,9 @@ services:
       - "9001:9001"    # Console web (navigateur)
     volumes:
       - minio_data:/data
-    environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-    command: server /data --console-address ":9001"
+    env_file:
+      - .env
+    command: server /data --console-address ":9001"  # 👈 obligatoire !
 
   redis:
     image: redis:alpine
